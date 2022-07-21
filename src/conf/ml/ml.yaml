@@ -68,8 +68,11 @@ label_smooth: 0.0
 model:
   name: lightvit_tiny
   pretrained: ./pretrained/lightvit_tiny_78.7.ckpt
-  load_head_ignore: true
+  load_head_ignore: True
 
 dataset:
   input_x: 224
   input_y: 224
+  eval_rate: 0.1
+  data_dir: /mnt/yogapose/
+  use_augments: True
