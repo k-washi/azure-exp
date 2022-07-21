@@ -2,6 +2,74 @@ defaults:
   - base_ml
 seed: 3407
 
-batch_size: 32
+# optimizer
 learning_rate: 0.001
-optimizer: AdamW
+adam_epsilon: 1e-8
+weight_decay: 1e-2
+
+# scheduler
+scheduler:
+  mode: min
+  # ReduceLROnPlateau
+  factor: 0.1
+  patience: 10
+  verbose: True
+  # CosineLRScheduler
+  t_initial: 50
+  t_mul: 1
+  decay_rate: 0.75
+  monitor: val_loss
+  warm_up_init: 1e-5
+  warm_up_t: 5
+  warmup_prefix: True
+
+
+
+# dataset
+batch_size: 32
+drop_last: True
+num_workers: 4
+pin_memory: True
+
+# model
+num_classes: 2
+
+# trainer
+gpu_devices: 0
+mix_precision: 16
+epochs: 300
+
+# log
+log_project_name: k-washi/yoga-pose-classification
+log_mode: async
+log_exe_id: 00001
+doc: ""
+
+model_save:
+  save_dir: .exp_model
+  top_k: 3
+  monitor: val_acc
+  mode: max
+
+accumulate_grad_batches: 1
+gradient_clip_val: 0
+profiler: simple
+fast_dev_run: False
+debug: False
+# callback
+early_stopping:
+  use: True
+  monitor: val_loss
+  mode: min
+  patience: 10
+
+# loss
+label_smooth: 0.0
+model:
+  name: lightvit_tiny
+  pretrained: ./pretrained/lightvit_tiny_78.7.ckpt
+  load_head_ignore: true
+
+dataset:
+  input_x: 224
+  input_y: 224

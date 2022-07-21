@@ -3,7 +3,7 @@ from typing import Optional
 from src.yogacls.LightViT.classification.lib.models.lightvit import LightViT
 
 
-def lightvit_tiny(num_classes=1000, **kwargs):
+def load_lightvit_tiny(num_classes=1000, **kwargs):
     model_kwargs = dict(patch_size=8, embed_dims=[64, 128, 256], num_layers=[2, 6, 6],
                         num_heads=[2, 4, 8, ], mlp_ratios=[8, 4, 4], num_tokens=8,
                         num_classes=num_classes, **kwargs)
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     import torchsummary
     import torch
     
-    model = lightvit_tiny(num_classes=2)
+    model = load_lightvit_tiny(num_classes=2)
     model = load_weight(model, ckpt_path, head_ignore=True)
     model.eval()
     
