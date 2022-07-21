@@ -15,45 +15,6 @@ NEPTUNE_AI_API_TOKEN=xxx
 src/util/load_env.py
 ```
 
-# AWS周りの環境設定
-
-もし、Data Version Controlなどを使用する場合に必要となる。
-
-- awsのクレデンシャル設定
-
-```
-aws configure
-```
-
-- aws cdkを使用する (データをs3で管理する場合など)
-
-```
-cd src/cdk/setup
-cdk synth
-cdk bootstrap
-```
-
-- 必要だった権限について
-
-```
-IAMFullAccess
-AmazonEC2ContainerRegistryFullAccess
-AmazonS3FullAccess
-AmazonSSMFullAccess
-AWSCloudFormationFullAccess
-AWSLambda_FullAccess
-```
-
-適宜、修正、追加を行ってください。
-
-- 新しいスタックを作成する場合
-
-```
-cdk init setup --language=python
-```
-
-また、`cdk destroy`などで、データの削除を行う予定がない場合、`src/cdk/setup/setup/setup_stack.py`のremoval_policyを削除すると良い。
-
 # 実行環境作成(エディターモード)
 
 `src.util.~`などモジュールのimportを行うために必要です。
