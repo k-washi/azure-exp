@@ -1,5 +1,6 @@
 from pyparsing import Optional
 import torch
+import os
 
 STATE_DICT_KEY = "state_dict"
 MODEL_HEAD_KEY = "head"
@@ -11,6 +12,9 @@ def load_ckpt(ckpt_path:str):
     return _ckpt
 
 def load_weight(model:torch.nn.Module, ckpt_path:str, head_ignore=False):
+    ckpt_path = str(ckpt_path)
+    if not os.path.exists(ckpt_path):
+        raise FileNotFoundError(f"{ckpt_path} is not found.")
     ckpt = load_ckpt(ckpt_path)
     model_dict = model.state_dict()
     

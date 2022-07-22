@@ -43,7 +43,7 @@ def compose_augmentation():
         A.Resize(230, 230),
         A.RandomCrop(height=224, width=224),
         A.HorizontalFlip(p=0.5),
-        A.RGBShift(r_shift_limit=15, g_shift_limit=15, b_shift_limit=15, p=0.5),
+        # A.RGBShift(r_shift_limit=15, g_shift_limit=15, b_shift_limit=15, p=0.5),
         # ぼかし
         A.Blur(blur_limit=15, p=0.5),
         # 明るさ、コントラスト
@@ -83,13 +83,12 @@ class YogaPoseDataset(Dataset):
         return len(self.data_list)
     def __getitem__(self, idx):
         fp, cid = self.data_list[idx]
-        image = Image.open(fp)
+        image = Image.open(fp).convert("RGB")
         image = np.array(image)
-        
+        #print(image.shape)
         if self.transform is not None:
             transformed = self.transform(image=image)
             image = transformed["image"]
-        
         return image, cid
     
 if __name__ == "__main__":

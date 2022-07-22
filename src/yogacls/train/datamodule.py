@@ -1,3 +1,4 @@
+import json
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
@@ -12,13 +13,15 @@ class YogaDataModule(LightningDataModule):
         self.ml_cfg = cfg.ml
     
     def setup(self, stage=None):
-        data_list= load_datalist(self.ml_cfg.dataset.data_dir)
+        data_list, class_labels = load_datalist(self.ml_cfg.dataset.data_dir)
+        print(f"DATA NUM: {len(data_list)}, example. {data_list[:2]}")
         self.train_list, self.eval_list = train_test_split(
                 data_list,
-                self.ml_cfg.dataset.eval_rate, shuffle=True, random_state=self.ml_cfg.seed
+                test_size=float(self.ml_cfg.dataset.eval_rate), shuffle=True, random_state=int(self.ml_cfg.seed)
             )
         if stage == "fit" or stage is None:
-
+            with open(self.ml_cfg.dataset.class_ids_path, "w") as f:
+                json.dump(class_labels, f, indent=2, ensure_ascii=False)
             if self.ml_cfg.debug:
                 self.train_list = self.train_list[:5]
                 self.eval_list = self.eval_list[:5]

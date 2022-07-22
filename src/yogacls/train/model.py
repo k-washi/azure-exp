@@ -6,7 +6,7 @@ import numpy as np
 from timm.scheduler import CosineLRScheduler
 from torch import nn
 from torch.optim import AdamW
-
+from neptune.new.types import File
 from src.yogacls.model.util import load_weight
 
 from src.util.plot import create_fig_of_confmat
@@ -16,10 +16,11 @@ from src.util.plot import create_fig_of_confmat
 def _model_setup(model_name, num_classes, ckpt_path=None, head_ignore=False):
     if model_name == "lightvit_tiny":
         from src.yogacls.model.lightvit import load_lightvit_tiny
-        model = load_lightvit_tiny(num_classes=2)
+        model = load_lightvit_tiny(num_classes=int(num_classes))
     else:
         raise NotImplementedError(f"{model_name}は、モデルの準備ができません。")
     if ckpt_path is not None:
+        print(ckpt_path)
         model = load_weight(model, ckpt_path, head_ignore)
     return model
 
@@ -31,6 +32,7 @@ class YogaPoseClassifier(LightningModule):
         mcfg = self.ml_cfg.model
         self.model = _model_setup(
             mcfg.name,
+            self.ml_cfg.num_classes,
             mcfg.pretrained,
             mcfg.load_head_ignore
         )
@@ -54,20 +56,20 @@ class YogaPoseClassifier(LightningModule):
     def training_step(self, batch, batch_idx):
         loss, acc, _, _ = self._step(batch)
         self.log(
-            "train_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True
+            "metrics/batch/train_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True
         )
         self.log(
-            "train_acc", acc, on_step=False, on_epoch=True, prog_bar=True, logger=True
+            "metrics/batch/train_acc", acc, on_step=False, on_epoch=True, prog_bar=True, logger=True
         )
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss, acc, targets, preds = self._step(batch)
         self.log(
-            "val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True
+            "metrics/batch/val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True
         )
         self.log(
-            "val_acc", acc, on_step=False, on_epoch=True, prog_bar=True, logger=True
+            "metrics/batch/val_acc", acc, on_step=False, on_epoch=True, prog_bar=True, logger=True
         )
         
         self.val_confusion.update(preds, targets)
@@ -76,18 +78,20 @@ class YogaPoseClassifier(LightningModule):
     def validation_epoch_end(self, outputs) -> None:
         # Confusion matrix
         conf_mat = self.val_confusion.compute().detach().cpu().numpy().astype(np.int)
-        fig = create_fig_of_confmat(conf_mat, class_num=self.ml_cfg.label_dim)
-        self.logger.experiment.log_image("Confusion matrix", fig, global_step=self.current_epoch)
+        fig = create_fig_of_confmat(conf_mat, class_num=self.ml_cfg.num_classes)
+        
+
+        self.logger.experiment["val/confusion_matrix"].log(File.as_image(fig))
         self.val_confusion.confmat *= 0
         
         
     def test_step(self, batch, batch_idx):
         loss, acc, _, _ = self._step(batch)
         self.log(
-            "test_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True
+            "metrics/batch/test_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True
         )
         self.log(
-            "test_acc", acc, on_step=False, on_epoch=True, prog_bar=True, logger=True
+            "metrics/batch/test_acc", acc, on_step=False, on_epoch=True, prog_bar=True, logger=True
         )
         return {"test_loss":loss, "test_acc":acc}
 
@@ -122,8 +126,8 @@ class YogaPoseClassifier(LightningModule):
         self.scheduler = CosineLRScheduler(
             self.optimizer,
             t_initial=self.ml_cfg.scheduler.t_initial,
-            t_mul=self.ml_cfg.scheduler.t_mul,
-            decay_rate=self.ml_cfg.scheduler.decay_rate,
+            cycle_mul=self.ml_cfg.scheduler.t_mul,
+            cycle_decay=self.ml_cfg.scheduler.decay_rate,
             warmup_t=self.ml_cfg.scheduler.warm_up_t,
             warmup_lr_init=self.ml_cfg.scheduler.warm_up_init,
             warmup_prefix=self.ml_cfg.scheduler.warmup_prefix,

@@ -143,3 +143,5 @@ kaggle.json
 
 LightViT/
 pretrained/
+nohup/
+.exp_model/

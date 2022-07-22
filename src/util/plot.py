@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 from torchvision import transforms
 
+from scikitplot.metrics import plot_confusion_matrix, plot_roc
+
 def create_fig_of_confmat(confmat, class_num):
     df_cm = pd.DataFrame(
         confmat, 
@@ -13,8 +15,13 @@ def create_fig_of_confmat(confmat, class_num):
     plt.figure()
     sns.set(font_scale=1.2)
     fig = sns.heatmap(df_cm, annot=True, annot_kws={"size": 16}, fmt='d').get_figure()
+    fig.canvas.draw()
+    img = fig.canvas.tostring_rgb()
+    w, h = fig.canvas.get_width_height()
+    c = len(img) // (w * h)
+    img = np.frombuffer(img, dtype=np.uint8).reshape(h, w, c)
     plt.close(fig)
-    return 
+    return img
 
  
 def show_img_imnet(dataset, save_path="./data/sample_show.png"):
